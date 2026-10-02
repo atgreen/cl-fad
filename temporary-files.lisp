@@ -26,6 +26,7 @@
         (ct:free buffer)
         (ct:free buffer1)))
     #+ecl (si:getenv x)
+    #+egcl (egcl-ext:getenv x)
     #+gcl (system:getenv x)
     #+lispworks (lispworks:environment-variable x)
     #+mcl (ccl:with-cstrs ((name x))
@@ -35,9 +36,13 @@
     #+sbcl (sb-ext:posix-getenv x)
     #+clasp (ext:getenv x)
     #+dotcl (dotcl:getenv x)
-    #-(or abcl allegro clisp clozure cmu cormanlisp ecl gcl lispworks mcl sbcl scl xcl clasp
+    #-(or abcl allegro clisp clozure cmu cormanlisp ecl egcl gcl lispworks mcl sbcl scl xcl clasp
           dotcl)
-    (error "~S is not supported on your implementation" 'getenv))
+    (let* ((package (find-package "UIOP"))
+           (getter (and package (find-symbol "GETENV" package))))
+      (if (and getter (fboundp getter))
+          (funcall getter x)
+          (error "~S is not supported on your implementation" 'getenv))))
 
   (defun directory-from-environment (environment-variable-name)
     (let ((string (getenv environment-variable-name)))
